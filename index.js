@@ -9,65 +9,85 @@ const { resolve } = require("path");
 
 // how many NFT's we will create
 const editionSize = myArgs.length > 0 ? Number(myArgs[0]) : 1;
-var metadata = [];
-var attributes = [];
-var hash = [];
-var decodedHash = [];
+var metadataList = [];
+var attributesList = [];
 let dnaList = [];
 
-const saveLayer = (_canvas, _edition) => {
-  fs.writeFileSync(`./output/${_edition}.png`, _canvas.toBuffer("image/png"));
+const saveImage = (_editionCount) => {
+  fs.writeFileSync(
+    `./output/${_editionCount}.png`,
+    canvas.toBuffer("image/png")
+  );
 };
 
-const addMetadata = (_edition) => {
+const genColor = () => {
+  let hue = Math.floor(Math.random() * 360);
+  let pastel = `hsl(${hue},100%,85%)`;
+  return pastel;
+};
+const drawBaground = () => {
+  ctx.fillstyle = genColor();
+  ctx.fillRect(0, 0, width, length);
+};
+
+const addMetadata = (_dna, _edition) => {
   let dateTime = Date.now();
   let tempMetadata = {
-    hash: hash.join(""),
-    decodedHash: decodedHash,
+    dna: _dna,
     edition: _edition,
     date: dateTime,
-    attributes: attributes,
+    attributes: attributesList,
   };
-  metadata.push(tempMetadata);
+  metadataList.push(tempMetadata);
+
   // we clearn the lists
-  attributes = [];
-  hash = [];
-  decodedHash = [];
+  attributesList = [];
 };
 
-const addAtributes = (_element, _layer) => {
-  let tempAttr = {
-    id: _element.id,
-    layer: _layer.name,
-    name: _element.name,
-    rarity: _element.rarity,
-  };
-  attributes.push(tempAttr);
-  hash.push(_layer.id);
-  hash.push(_element.id);
-  decodedHash.push({ [_layer.id]: _element.id });
+const addAtributes = (_element) => {
+  let selectedElement = _element.layer.selectedElement;
+  attributesList.push({
+    name: selectedElement.name,
+    rarity: selectedElement.rarity,
+  });
 };
 
 const loadLayerImg = async (_layer) => {
-  return new Promise(async(resolve)=>{
-    
-    const image = await loadImage(`${_layer.location}${element.fileName}`);
-    resolve({layer:_layer,loadedImage:image})
+  return new Promise(async (resolve) => {
+    const image = await loadImage(
+      `${_layer.location}${_layer.selectedElement.fileName}`
+    );
+    resolve({ layer: _layer, loadedImage: image });
   });
 };
 
 const drawElement = (_element) => {
-
   ctx.drawImage(
-    image,
-    _layer.position.x,
-    _layer.position.y,
-    _layer.size.width,
-    _layer.size.height
+    _element.loadedImage,
+    _element.layer.position.x,
+    _element.layer.position.y,
+    _element.layer.size.width,
+    _element.layer.size.height
   );
+
   addAtributes(_element);
 };
 
+const constructLayerToDna = (_dna, _layer) => {
+  let DnaSegment = _dna.toString().match(/.{1,2}/g);
+  console.log(DnaSegment);
+  let mappedDnaToLayers = _layer.map((layer) => {
+    let selectedElement =
+      layer.elements[[parseInt(DnaSegment) % layer.elements.length]];
+    return {
+      location: layer.location,
+      position: layer.position,
+      size: layer.size,
+      selectedElement: selectedElement,
+    };
+  });
+  return mappedDnaToLayers;
+};
 const isDnaUnique = (_DnaList = [], _dna) => {
   let foundDna = _DnaList.find((i) => i === _dna);
   return foundDna == undefined ? true : false;
@@ -81,31 +101,41 @@ const createDna = (_len) => {
   return randNum;
 };
 
-const writeMetaData = () => {
-  fs.writeFileSync("./output/_metadata.json", JSON.stringify(metadata));
+const writeMetaData = (_data) => {
+  fs.writeFileSync("./output/_metadata.json", _data);
 };
 
-const createNFT = () => {
-  let eCount = 1;
-  while (eCount <= editionSize) {
+const createNFT = async () => {
+  writeMetaData("");
+  let editionCount = 1;
+  while (editionCount <= editionSize) {
     let newDna = createDna(layers.length * 2 - 1);
     console.log(dnaList);
     console.log(`Dna list ${newDna}`);
     if (isDnaUnique(dnaList, newDna)) {
       console.log(`Created ${newDna}`);
+      let results = constructLayerToDna(newDna, layers);
+      let loadedElemens = []; // promise array
+      results.forEach((layer) => {
+        loadedElemens.push(loadLayerImg(layer)); // promise
+      });
 
-      // layers.forEach((layer) => {
-      //   drawLayer(layer, i);
-      // });
-      // addMetadata(i);
-      // console.log(`created editionSize` + i);
+      await Promise.all(loadedElemens).then((elementArray) => {
+        elementArray.forEach((element) => {
+          drawElement(element);
+        });
+
+        saveImage(editionCount);
+        addMetadata(newDna, editionCount);
+        console.log(`Created edition: ${editionCount} with DNA: ${newDna}`);
+      });
       dnaList.push(newDna);
-      eCount++;
+      editionCount++;
     } else {
       console.log("Dna exists");
     }
   }
+  writeMetaData(JSON.stringify(metadataList));
 };
 
 createNFT();
-writeMetaData();
