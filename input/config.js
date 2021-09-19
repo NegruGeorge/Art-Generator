@@ -79,34 +79,31 @@ const layers = [
     size: { width: width, height: height },
   },
 
-  // {
-  //     id:5,
-  //     name:"shine",
-  //     location: `${dir}/shine/`,
-  //     elements:getElements(`${dir}/shine/`),
-  //     position:{x:0,y:0},
-  //     size:{width:width,height:height}
+  {
+    id: 5,
+    name: "shine",
+    location: `${dir}/shine/`,
+    elements: getElements(`${dir}/shine/`),
+    position: { x: 0, y: 0 },
+    size: { width: width, height: height },
+  },
 
-  // },
-
-  // {
-  //     id:6,
-  //     name:"bottom lid",
-  //     location: `${dir}/bottom lid/`,
-  //     elements:getElements(`${dir}/bottom lid/`),
-  //     position:{x:0,y:0},
-  //     size:{width:width,height:height}
-
-  // },
-  // {
-  //     id:7,
-  //     name:"top lid",
-  //     location: `${dir}/top lid/`,
-  //     elements:getElements(`${dir}/top lid/`),
-  //     position:{x:0,y:0},
-  //     size:{width:width,height:height}
-
-  // },
+  {
+    id: 6,
+    name: "bottom lid",
+    location: `${dir}/bottom lid/`,
+    elements: getElements(`${dir}/bottom lid/`),
+    position: { x: 0, y: 0 },
+    size: { width: width, height: height },
+  },
+  {
+    id: 7,
+    name: "top lid",
+    location: `${dir}/top lid/`,
+    elements: getElements(`${dir}/top lid/`),
+    position: { x: 0, y: 0 },
+    size: { width: width, height: height },
+  },
 ];
 
 module.exports = { layers, width, height };
